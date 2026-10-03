@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_CONFIG } from "@/lib/site-config";
 import { SERVICES_DATA } from "@/lib/services-data";
 import { getTopStatesByCoverage, getPriorityCities } from "@/lib/coverage";
 import JsonLd from "@/components/JsonLd";
+
+export const metadata: Metadata = {
+  verification: {
+    google: "xN5iPRACvPXi78_21niknbJVhWDu3lux7VbrP18ILJ4",
+  },
+};
 
 export default function HomePage() {
   const topStates = getTopStatesByCoverage(16);
