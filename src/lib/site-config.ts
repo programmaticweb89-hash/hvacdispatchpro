@@ -7,7 +7,7 @@ export const SITE_CONFIG = {
   phoneDisplay: "(855) 734-0279",
   phoneHref: "tel:+18557340279",
   hours: "Open 24 Hours, 7 Days a Week",
-  updatedDate: "2026-10-03",
+  updatedDate: "2026-10-04",
   stats: {
     zips: "22,152",
     cities: "12,922",
