@@ -1,5 +1,6 @@
 import coverageRaw from "@/data/coverage.json";
 import { STATE_CLIMATE, StateClimateProfile } from "./climate-data";
+import { ZIP3_PROFILES, Zip3Profile } from "./zip-profiles";
 import { SERVICES_DATA, ServiceData } from "./services-data";
 
 export interface CityRecord {
@@ -27,9 +28,32 @@ export interface ZipDetails {
   siblingZips: string[];
   nearbyCities: CityRecord[];
   climate: StateClimateProfile;
+  local: Zip3Profile;
+  buildingCount: number;
+  cityZipCount: number;
 }
 
 const statesMap = coverageRaw as Record<string, StateRecord>;
+
+/**
+ * Safety net for any prefix missing from the generated table. Keeps the page
+ * rendering with state-level values rather than throwing.
+ */
+function fallbackProfile(abbr: string): Zip3Profile {
+  const c = STATE_CLIMATE[abbr] || STATE_CLIMATE.CA;
+  return {
+    region: c.region,
+    climateZone: c.climateZone,
+    winterLow: c.winterLow,
+    summerHigh: c.summerHigh,
+    heatDesignTemp: "local design temperature",
+    housingStock: c.commonEquipment,
+    utility: "the local electric and gas utility",
+    localIssue: c.commonBreakdowns[0] || "seasonal wear on central heating and cooling equipment",
+  };
+}
+
+export { fallbackProfile };
 
 // Precompute flat lookup maps once per server instance
 const zipLookup = new Map<
@@ -135,6 +159,9 @@ export function getCityDetails(stateSlug: string, citySlug: string) {
     .slice(0, 6);
 
   const climate = STATE_CLIMATE[state.abbr] || STATE_CLIMATE.CA;
+  const primaryZip = city.zips[0] || "";
+  const local =
+    ZIP3_PROFILES[`${state.abbr}:${primaryZip.slice(0, 3)}`] || fallbackProfile(state.abbr);
 
   // Deterministic hash to rotate featured heating and cooling services
   const hash = (citySlug.length * 7 + state.abbr.charCodeAt(0) * 13) % 3;
@@ -152,6 +179,7 @@ export function getCityDetails(stateSlug: string, citySlug: string) {
       cityCount: allStateCities.length,
     },
     climate,
+    local,
     nearbyCities,
     majorStateCities,
     featuredHeating,
@@ -165,6 +193,7 @@ export function getZipDetails(zip: string): ZipDetails | null {
   const state = statesMap[ref.stateSlug];
   const city = state.cities[ref.citySlug];
   const climate = STATE_CLIMATE[state.abbr] || STATE_CLIMATE.CA;
+  const local = ZIP3_PROFILES[`${state.abbr}:${zip.slice(0, 3)}`] || fallbackProfile(state.abbr);
 
   // Sibling zips in same city or numerically adjacent zips in same state
   let siblingZips = city.zips.filter((z) => z !== zip).slice(0, 10);
@@ -193,6 +222,9 @@ export function getZipDetails(zip: string): ZipDetails | null {
     siblingZips,
     nearbyCities,
     climate,
+    local,
+    buildingCount: city.zips.length,
+    cityZipCount: city.zips.length,
   };
 }
 

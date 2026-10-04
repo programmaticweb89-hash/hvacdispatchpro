@@ -17,8 +17,8 @@ export function generateMetadata({
   const data = getZipDetails(params.zip);
   if (!data) return {};
 
-  const title = `HVAC, Furnace & AC Repair in ${data.zip} (${data.cityName}, ${data.stateAbbr})`;
-  const description = `24/7 central furnace repair, furnace replacement, furnace cleaning, and central AC service in zip code ${data.zip} (${data.cityName}, ${data.stateAbbr}). Call ${SITE_CONFIG.phoneDisplay}.`;
+  const title = `Furnace & Air Conditioning Repair in ${data.zip} (${data.cityName}, ${data.stateAbbr})`;
+  const description = `Central furnace repair, furnace replacement, furnace cleaning, and central AC service in zip code ${data.zip}, ${data.cityName}, ${data.stateAbbr}. ${data.local.climateZone} climate, ${data.local.winterLow} winter lows. Call ${SITE_CONFIG.phoneDisplay}.`;
 
   return {
     title,
@@ -51,25 +51,33 @@ export default function ZipPage({
     stateAbbr,
     siblingZips,
     nearbyCities,
-    climate,
+    local,
+    buildingCount,
   } = data;
+
+  const neighborList =
+    siblingZips.length > 0 ? siblingZips.slice(0, 5).join(", ") : "";
 
   const zipFaqs = [
     {
-      q: `Is zip code ${zip} in ${cityName}, ${stateAbbr} covered for 24/7 HVAC service?`,
-      a: `Yes. Zip code ${zip} in ${cityName}, ${stateName} is an active coverage area for central furnace repair, furnace replacement, furnace cleaning, air conditioning repair, AC replacement, and AC cleaning. Call ${SITE_CONFIG.phoneDisplay} and give zip code ${zip} to schedule.`,
+      q: `Is zip code ${zip} covered for 24 hour furnace and AC service?`,
+      a: `Yes. Zip code ${zip} in ${cityName}, ${stateAbbr} is active coverage for central furnace repair, furnace replacement, furnace cleaning, air conditioning repair, AC replacement, and air conditioning cleaning. Call ${SITE_CONFIG.phoneDisplay} and state zip code ${zip} so the call routes to a technician already working ${local.region}.`,
     },
     {
       q: `What heating and cooling equipment do you service in ${zip}?`,
-      a: `In zip code ${zip} (${cityName}, ${stateAbbr}), we service residential ducted central gas furnaces, propane furnaces, electric furnaces, and central split-system or packaged air conditioners. We do not service window AC units or ductless mini-splits.`,
+      a: `We service residential central ducted systems only: gas, propane, and electric furnaces plus central split-system and packaged air conditioners. The housing here is mostly ${local.housingStock.toLowerCase()}, so most calls in ${zip} are forced-air furnaces paired with a split AC. We do not service ductless mini-splits or portable window units.`,
     },
     {
-      q: `How cold does it get in ${zip} (${cityName}, ${stateAbbr}) during winter?`,
-      a: `Homes in ${zip} experience typical ${stateName} winter lows around ${climate.winterLow} and summer highs in the ${climate.summerHigh}. Most homes in the ${zip} area rely on ${climate.primaryHeatFuel.toLowerCase()} for central heating.`,
+      q: `What climate does zip code ${zip} fall in?`,
+      a: `Zip code ${zip} sits in the ${local.climateZone.toLowerCase()} band of ${local.region}. Winter lows typically run ${local.winterLow}, and summer highs reach ${local.summerHigh}. Local equipment is sized to a ${local.heatDesignTemp}. Most homes around here are heated with ${local.utility} as the utility provider.`,
     },
     {
-      q: `Do you provide upfront written quotes in zip code ${zip}?`,
-      a: `Yes. Before turning a wrench on your furnace or central air conditioner in ${zip}, the licensed technician completes a full system diagnostic and provides a straightforward written quote for your approval.`,
+      q: `Why do central systems fail in ${local.region}?`,
+      a: `The most common failure we see across ${local.region} is ${local.localIssue.toLowerCase()}. That is why a pre-season inspection on a ${zip} system focuses on the parts this climate punishes hardest, not a generic checklist.`,
+    },
+    {
+      q: `Do you charge for a diagnostic visit in ${zip}?`,
+      a: `The technician completes a full system diagnostic on arrival, then hands you a written quote before any repair begins. You approve the number before work starts. No repair happens in ${zip} without your written go-ahead.`,
     },
   ];
 
@@ -123,90 +131,153 @@ export default function ZipPage({
     })),
   };
 
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `Central Furnace and Air Conditioning Service in Zip ${zip}`,
+    serviceType: "Furnace and central air conditioning repair, replacement, and cleaning",
+    areaServed: {
+      "@type": "PostalCodeSpecification",
+      postalCode: zip,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: cityName,
+        addressRegion: stateAbbr,
+        addressCountry: "US",
+      },
+    },
+    provider: {
+      "@type": "HVACBusiness",
+      name: SITE_CONFIG.name,
+      telephone: SITE_CONFIG.phoneE164,
+      url: `${SITE_CONFIG.url}/`,
+    },
+  };
+
   return (
     <>
-      <JsonLd data={[breadcrumbSchema, faqSchema]} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
+      <JsonLd data={serviceSchema} />
 
-      <section className="bg-brand-950 text-white py-14 px-4 border-b border-brand-900">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          <div className="lg:col-span-8">
-            <nav aria-label="Breadcrumb" className="text-xs text-slate-300 mb-4">
-              <Link href="/" className="hover:underline">
-                Home
-              </Link>{" "}
-              /{" "}
-              <Link href="/areas/" className="hover:underline">
-                Service Areas
-              </Link>{" "}
-              /{" "}
-              <Link href={`/areas/${stateSlug}/`} className="hover:underline">
-                {stateName}
-              </Link>{" "}
-              /{" "}
-              <Link
-                href={`/areas/${stateSlug}/${citySlug}/`}
-                className="hover:underline"
-              >
-                {cityName}, {stateAbbr}
-              </Link>{" "}
-              / <span className="text-white font-semibold">Zip {zip}</span>
-            </nav>
+      <section className="bg-brand-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <nav className="text-xs text-slate-300 mb-4" aria-label="Breadcrumb">
+            <Link href="/" className="hover:text-white">Home</Link>
+            <span className="mx-1.5">/</span>
+            <Link href="/areas/" className="hover:text-white">Service Areas</Link>
+            <span className="mx-1.5">/</span>
+            <Link href={`/areas/${stateSlug}/`} className="hover:text-white">{stateName}</Link>
+            <span className="mx-1.5">/</span>
+            <Link href={`/areas/${stateSlug}/${citySlug}/`} className="hover:text-white">{cityName}</Link>
+            <span className="mx-1.5">/</span>
+            <span className="text-slate-400">Zip {zip}</span>
+          </nav>
 
-            <span className="inline-block text-xs font-bold uppercase tracking-wider bg-brand-900 border border-brand-700 text-amber-300 px-3 py-1 rounded-md mb-3">
-              Zip Code {zip} • {cityName}, {stateAbbr}
-            </span>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-              Furnace &amp; Air Conditioning Repair in {zip} ({cityName}, {stateAbbr})
-            </h1>
-            <p className="text-slate-200 text-base sm:text-lg mt-4 leading-relaxed">
-              Need fast central heating or cooling service in the {zip} zip code of {cityName}, {stateName}? Our licensed local HVAC technicians dispatch across {zip} 24 hours a day for furnace repair, furnace replacement, furnace cleaning, air conditioning repair, AC replacement, and AC cleaning.
-            </p>
-          </div>
-
-          <div className="lg:col-span-4">
-            <div className="bg-white text-slate-900 rounded-2xl p-6 shadow-xl border border-slate-200">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded">
-                Zip {zip} Active Coverage
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8">
+              <span className="inline-block text-xs font-bold uppercase tracking-wider bg-white/10 text-emerald-300 px-3 py-1 rounded mb-3">
+                {local.region}
               </span>
-              <h2 className="text-xl font-extrabold mt-2">
-                Dispatch for {zip} ({cityName})
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                Say zip code <strong>{zip}</strong> on the call and tell us what your central furnace or air conditioner is doing.
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+                Furnace and Air Conditioning Service in {zip}
+              </h1>
+              <p className="text-slate-200 text-base sm:text-lg mt-4 leading-relaxed">
+                Zip code {zip} sits in {cityName}, {stateName}, in the {local.climateZone.toLowerCase()} part of {local.region}. Technicians covering this zip dispatch around the clock for central furnace repair, furnace replacement, furnace cleaning, air conditioning repair, AC replacement, and air conditioning cleaning.
               </p>
-              <a
-                href={SITE_CONFIG.phoneHref}
-                className="mt-5 block w-full text-center bg-accent-600 hover:bg-accent-700 text-white font-extrabold text-lg py-4 rounded-xl shadow transition-colors"
-              >
-                Call {SITE_CONFIG.phoneDisplay}
-              </a>
-              <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
-                {SITE_CONFIG.equipmentPolicy}
-              </p>
+            </div>
+
+            <div className="lg:col-span-4">
+              <div className="bg-white text-slate-900 rounded-2xl p-6 shadow-xl border border-slate-200">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded">
+                  Zip {zip} Active Coverage
+                </span>
+                <h2 className="text-xl font-extrabold mt-2">
+                  Dispatch for {zip} ({cityName})
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                  Give zip code <strong>{zip}</strong> when the call connects and describe what the {local.region} technician will be looking at: no cooling, no heat, short cycling, or a system that never catches up.
+                </p>
+                <a
+                  href={SITE_CONFIG.phoneHref}
+                  className="mt-5 block w-full text-center bg-accent-600 hover:bg-accent-700 text-white font-extrabold text-lg py-4 rounded-xl shadow transition-colors"
+                >
+                  Call {SITE_CONFIG.phoneDisplay}
+                </a>
+                <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+                  {SITE_CONFIG.equipmentPolicy}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-        {/* Zip Code Quick Facts Table & Local Summary */}
+        {/* Region specific climate and equipment section */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <h2 className="text-2xl font-extrabold text-slate-900">
+            How {local.region} Weather Loads a System in {zip}
+          </h2>
+          <p className="text-sm sm:text-base text-slate-700 leading-relaxed mt-4">
+            The {local.climateZone.toLowerCase()} climate that covers zip {zip} runs winter lows of {local.winterLow} and summer highs of {local.summerHigh}. Central equipment installed around {cityName} and the rest of {local.region} is sized against a {local.heatDesignTemp}, which is the number that decides whether a furnace keeps up on the coldest night of the year or falls behind and runs nonstop.
+          </p>
+          <p className="text-sm sm:text-base text-slate-700 leading-relaxed mt-4">
+            Housing stock shapes the repair pattern just as much as the weather. Most of the homes in and around {zip} are {local.housingStock.toLowerCase()}. That construction type is the reason service calls across {local.region} tend to look the same year after year.
+          </p>
+          <div className="mt-6 p-5 rounded-xl bg-amber-50 border border-amber-200">
+            <h3 className="font-extrabold text-amber-900 text-base">
+              The failure we see most often in {local.region}
+            </h3>
+            <p className="text-sm text-amber-900 mt-2 leading-relaxed">
+              {local.localIssue}. If you are booking service in {zip}, this is the first thing the technician inspects, because a system that survived last season is not proof it will survive this one.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Local Utility Provider
+              </h3>
+              <p className="text-sm font-bold text-slate-900 mt-1.5">{local.utility}</p>
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                Rebates and efficiency programs for furnace and AC replacement in {local.region} are administered here, so replace equipment with the current program terms in hand.
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Service Density in {cityName}
+              </h3>
+              <p className="text-sm font-bold text-slate-900 mt-1.5">
+                {buildingCount} covered zip {buildingCount === 1 ? "code" : "codes"} in this city
+              </p>
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                Dispatch routes by 5-digit zip rather than a radius, so the technician assigned to {zip} already works the surrounding streets and can reach the address without a cross-zone drive.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Zip fact table */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-7 space-y-4">
             <h2 className="text-2xl font-extrabold text-slate-900">
-              Central HVAC Service Coverage for Zip Code {zip}
+              Zip Code {zip} Service Profile
             </h2>
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
-              Zip code {zip} is located in{" "}
+              Zip {zip} falls inside{" "}
               <Link
                 href={`/areas/${stateSlug}/${citySlug}/`}
                 className="font-bold text-brand-800 underline"
               >
                 {cityName}, {stateName}
               </Link>
-              . Our dispatch system routes service calls directly by 5-digit zip code rather than a rough radius, ensuring the technician assigned to your call actively services {zip} and neighboring {cityName} neighborhoods.
+              , in the {local.region} service zone. The table beside this text lists the numbers that matter when a technician sizes or diagnoses a system at a {zip} address.
             </p>
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
-              Homes in {zip} experience {stateName}&apos;s {climate.climateZone.toLowerCase()} climate ({climate.seasonalSummary.toLowerCase()}). Most residences in {zip} operate {climate.commonEquipment.toLowerCase()} fueled by {climate.primaryHeatFuel.toLowerCase()}. {climate.winterPrepNote}
+              {neighborList
+                ? `Adjacent covered zips ${neighborList} share the same ${local.climateZone.toLowerCase()} load profile, so the equipment recommendations below apply to the whole cluster, not just ${zip}.`
+                : `Equipment recommendations for ${zip} follow the ${local.climateZone.toLowerCase()} load profile for ${local.region}.`}
             </p>
           </div>
 
@@ -219,6 +290,10 @@ export default function ZipPage({
                     <td className="p-3.5 font-extrabold text-slate-900">{zip}</td>
                   </tr>
                   <tr>
+                    <th className="p-3.5 font-bold text-slate-700">Region</th>
+                    <td className="p-3.5 font-bold text-slate-900">{local.region}</td>
+                  </tr>
+                  <tr className="bg-slate-50">
                     <th className="p-3.5 font-bold text-slate-700">Primary City</th>
                     <td className="p-3.5 font-bold">
                       <Link
@@ -229,28 +304,25 @@ export default function ZipPage({
                       </Link>
                     </td>
                   </tr>
-                  <tr className="bg-slate-50">
-                    <th className="p-3.5 font-bold text-slate-700">State</th>
-                    <td className="p-3.5 font-bold">
-                      <Link
-                        href={`/areas/${stateSlug}/`}
-                        className="text-brand-800 hover:underline"
-                      >
-                        {stateName} ({stateAbbr})
-                      </Link>
-                    </td>
-                  </tr>
                   <tr>
+                    <th className="p-3.5 font-bold text-slate-700">Climate Band</th>
+                    <td className="p-3.5 text-slate-800">{local.climateZone}</td>
+                  </tr>
+                  <tr className="bg-slate-50">
                     <th className="p-3.5 font-bold text-slate-700">Winter Lows</th>
-                    <td className="p-3.5 text-slate-800">{climate.winterLow}</td>
-                  </tr>
-                  <tr className="bg-slate-50">
-                    <th className="p-3.5 font-bold text-slate-700">Summer Highs</th>
-                    <td className="p-3.5 text-slate-800">{climate.summerHigh}</td>
+                    <td className="p-3.5 text-slate-800">{local.winterLow}</td>
                   </tr>
                   <tr>
-                    <th className="p-3.5 font-bold text-slate-700">Main Heat Source</th>
-                    <td className="p-3.5 text-slate-800">{climate.primaryHeatFuel}</td>
+                    <th className="p-3.5 font-bold text-slate-700">Summer Highs</th>
+                    <td className="p-3.5 text-slate-800">{local.summerHigh}</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <th className="p-3.5 font-bold text-slate-700">Heating Design Temp</th>
+                    <td className="p-3.5 text-slate-800">{local.heatDesignTemp}</td>
+                  </tr>
+                  <tr>
+                    <th className="p-3.5 font-bold text-slate-700">Utility Provider</th>
+                    <td className="p-3.5 text-slate-800">{local.utility}</td>
                   </tr>
                   <tr className="bg-slate-50">
                     <th className="p-3.5 font-bold text-slate-700">Dispatch Hours</th>
@@ -264,54 +336,49 @@ export default function ZipPage({
           </div>
         </section>
 
-        {/* 6 Core Services in Zip Code */}
+        {/* Services */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <h2 className="text-2xl font-extrabold text-slate-900">
-            What We Service in {zip} ({cityName}, {stateAbbr})
+            Book Work in {zip} or in a Neighboring Zip
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            All six central heating and cooling services below are available in zip code {zip}. Call {SITE_CONFIG.phoneDisplay} for upfront diagnostic and repair pricing.
+            Pick the job you need and the detail page explains what the visit covers. {local.region} technicians carry the parts for these calls on the truck, so most {zip} repairs finish in one trip.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6">
             {SERVICES_DATA.map((s) => (
               <Link
                 key={s.slug}
                 href={`/services/${s.slug}/`}
-                className="p-4 rounded-xl bg-slate-50 hover:bg-brand-50 border border-slate-200 transition-colors"
+                className="p-3.5 rounded-xl bg-slate-50 hover:bg-brand-50 border border-slate-200 transition-colors text-center"
               >
-                <span className="text-xs font-bold uppercase text-brand-700">
+                <span className="text-[10px] font-bold uppercase text-brand-700 block">
                   {s.category}
                 </span>
-                <span className="font-extrabold text-slate-900 block text-base mt-0.5">
+                <span className="font-extrabold text-slate-900 block text-sm mt-1 leading-snug">
                   {s.name}
-                </span>
-                <span className="text-xs text-slate-600 mt-1 block">
-                  {s.shortDescription}
                 </span>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* Local Map Section for Zip Code */}
         <LocalMapSection
           locationLabel={`Zip Code ${zip} (${cityName}, ${stateAbbr})`}
           query={`${zip}, ${cityName}, ${stateAbbr}, USA`}
         />
 
-        {/* Neighboring Zip Codes & Nearby Cities */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <h2 className="text-2xl font-extrabold text-slate-900">
-            Nearby Zip Codes &amp; Communities Around {zip}
+            Zip Codes and Cities Adjacent to {zip}
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Technicians covering {zip} in {cityName} also dispatch to these adjacent zip codes and nearby {stateName} cities:
+            These neighboring zips and {stateName} cities sit inside the same {local.region} dispatch zone, which is why a technician already working {zip} can often add a nearby same-day slot.
           </p>
 
           {siblingZips.length > 0 && (
             <div className="mt-5">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                Adjacent Covered Zip Codes:
+                Adjacent Covered Zip Codes
               </h3>
               <div className="flex flex-wrap gap-2.5">
                 {siblingZips.map((sz) => (
@@ -330,7 +397,7 @@ export default function ZipPage({
           {nearbyCities.length > 0 && (
             <div className="mt-6 pt-5 border-t border-slate-100">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                Other {stateName} Cities We Serve:
+                Other {stateName} Cities We Serve
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 text-xs">
                 {nearbyCities.map((nc) => (
@@ -347,10 +414,9 @@ export default function ZipPage({
           )}
         </section>
 
-        {/* FAQs */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
           <h2 className="text-2xl font-extrabold text-slate-900">
-            Questions About Furnace &amp; AC Service in {zip}
+            Questions About HVAC Service in {zip}
           </h2>
           <div className="mt-6 space-y-4">
             {zipFaqs.map((faq, idx) => (

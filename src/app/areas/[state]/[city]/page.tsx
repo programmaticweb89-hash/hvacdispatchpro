@@ -47,6 +47,7 @@ export default function CityPage({
     city,
     state,
     climate,
+    local,
     nearbyCities,
     majorStateCities,
     featuredHeating,
@@ -74,7 +75,7 @@ export default function CityPage({
     },
     {
       q: `How does ${state.name} weather impact furnaces and air conditioners in ${city.name}?`,
-      a: `${city.name} experiences ${state.name}'s ${climate.climateZone.toLowerCase()} climate, with winter lows around ${climate.winterLow} and summer highs in the ${climate.summerHigh}. Pre-winter furnace cleaning in October and annual AC coil cleaning help prevent peak-season breakdowns.`,
+      a: `${city.name} sits in the ${local.climateZone.toLowerCase()} band of ${local.region}, with winter lows running ${local.winterLow} and summer highs reaching ${local.summerHigh}. Local systems are sized to a ${local.heatDesignTemp}. Pre-season furnace cleaning in autumn and an annual AC coil cleaning keep both systems reliable through the peak weeks.`,
     },
     {
       q: `Do I get a written price quote before work starts on my ${city.name} home?`,
@@ -242,13 +243,13 @@ export default function CityPage({
               Central Heating &amp; Air Conditioning Service in {city.name}, {state.name}
             </h2>
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
-              Homeowners in {city.name}, {state.abbr} deal with {state.name}&apos;s {climate.climateZone.toLowerCase()} weather pattern: {climate.seasonalSummary.toLowerCase()}. Typical winter lows drop into the {climate.winterLow}, while summer afternoon highs reach the {climate.summerHigh}.
+              Homeowners in {city.name}, {state.abbr} sit in the {local.climateZone.toLowerCase()} band of {local.region}. Winter lows here typically run {local.winterLow}, and summer afternoon highs reach {local.summerHigh}. Central equipment across this area is sized against a {local.heatDesignTemp}, and {local.utility} serves as the local utility provider.
             </p>
             <p className="text-sm sm:text-base text-slate-700 leading-relaxed">
-              Most homes across {city.name} ({sampleZips}) use {climate.primaryHeatFuel.toLowerCase()} and rely on {climate.commonEquipment.toLowerCase()}. When a central furnace ignitor cracks on a freezing night or an outdoor AC capacitor fails during a summer heatwave, waiting days for an appointment is not an option. Our local dispatch line connects your {city.name} address with a licensed technician who carries standard diagnostic instruments and replacement parts on the truck.
+              Most homes across {city.name} ({sampleZips}) are {local.housingStock.toLowerCase()}, and they rely on {climate.primaryHeatFuel.toLowerCase()} feeding {climate.commonEquipment.toLowerCase()}. When a central furnace ignitor cracks on a freezing night or an outdoor AC capacitor fails during a summer heatwave, waiting days for an appointment is not an option. Our local dispatch line connects your {city.name} address with a licensed technician who carries standard diagnostic instruments and replacement parts on the truck.
             </p>
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-950">
-              <strong>Pre-Winter Heating Note for {city.name}:</strong> {climate.winterPrepNote}
+              <strong>What Fails Most in {local.region}:</strong> {local.localIssue}. {climate.winterPrepNote}
             </div>
           </div>
 
